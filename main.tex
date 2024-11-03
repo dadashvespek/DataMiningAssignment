@@ -31,8 +31,12 @@
 \maketitle
 
 \begin{abstract}
-With smartphones now widely accessible, capturing moments through photography has become effortless. However, various factors often degrade image quality, causing blurring and noise. For instance, Gaussian noise can arise in low-light environments, salt-and-pepper noise may result from data transmission errors, and common types of blur, like motion blur from hand tremors or Gaussian blur from defocusing, further reduce clarity. This study aims to utilize a machine learning regression model to predict blur kernels (Point Spread Functions, PSFs) corresponding to specific image features and apply Wiener deconvolution to restore image details. This approach introduces an adaptive method for blur kernel selection based on image characteristics, aiming to enhance image sharpness across different scenarios and effectively reduce blur artifacts.
+With smartphones now widely accessible, capturing moments through photography has become effortless. However, various factors often degrade image quality, causing blurring and noise. For instance, Gaussian noise can arise in low-light environments, salt-and-pepper noise may result from data transmission errors, and common types of blur, like motion blur from hand tremors or Gaussian blur from defocusing, further reduce clarity. This study aims to utilize a machine learning regression model to predict blur kernels (Point Spread Functions, PSFs) corresponding to specific image features and apply Wiener deconvolution to restore image details. This approach introduces an adaptive method for blur kernel selection based on image characteristics, aiming to enhance image sharpness across different scenarios and effectively reduce blur artifacts.\\
 \end{abstract}
+\begin{keywords}
+  Image Deblurring, Adaptive Kernel Estimation, Wiener Deconvolution, Machine Learning, Noise Reduction
+\end{keywords}
+
 \section{Introduction}
 Image blur is a persistent challenge in digital photography that significantly impacts image quality and visual information retention. The problem of image restoration has been a central focus in signal processing since the advent of digital imaging, with groundbreaking work by \citet{molina2001image} establishing Bayesian frameworks for astronomical image restoration. Early restoration techniques, as comprehensively reviewed by \citet{banham1997digital}, were primarily developed for space exploration, medical imaging applications, and astronomical observations. These applications demanded highly specialized deblurring approaches due to their unique imaging conditions and quality requirements. As digital photography evolved from its inception in the 1970s through Kodak's first digital camera prototype, to today's ubiquitous smartphone cameras, the challenge of blur has remained constant, though its sources have varied and become more complex. This degradation can occur through various mechanisms, including camera motion, defocus, or atmospheric turbulence, each presenting unique challenges for restoration algorithms. While numerous deblurring techniques exist, most either require precise knowledge of the blur kernel or rely on computationally intensive deep learning approaches that may not be practical in all scenarios, particularly in resource-constrained environments or real-time applications.
 \subsection{Problem Statement}
@@ -55,9 +59,6 @@ The proposed approach bridges the gap between computationally intensive deep lea
 \end{itemize}
 \subsection{Methodology Overview}
 Our approach combines traditional image processing techniques with modern machine learning methods. We first extract relevant features from blurred images, use these features to predict appropriate blur kernels through a regression model, and then apply Wiener deconvolution using the predicted kernels. This methodology allows for adaptive kernel selection while maintaining computational efficiency.
-\begin{keywords}
-  Image Deblurring, Adaptive Kernel Estimation, Wiener Deconvolution, Machine Learning, Noise Reduction
-\end{keywords}
 
 \section{Literature Review}
 
