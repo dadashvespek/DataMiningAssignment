@@ -1,0 +1,79 @@
+\begin{thebibliography}{12}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Amrollahi~Biyouki and Hwangbo(2023)]{amrollahi2023survey}
+S~Amrollahi~Biyouki and H~Hwangbo.
+\newblock A comprehensive survey on deep neural image deblurring.
+\newblock \emph{arXiv preprint arXiv:2310.04719}, 2023.
+\newblock URL \url{https://doi.org/10.48550/arXiv.2310.04719}.
+
+\bibitem[Banham and Katsaggelos(1997)]{banham1997digital}
+Mark~R Banham and Aggelos~K Katsaggelos.
+\newblock Digital image restoration.
+\newblock \emph{IEEE Signal Processing Magazine}, 14\penalty0 (2):\penalty0 24--41, March 1997.
+\newblock \doi{10.1109/79.581363}.
+
+\bibitem[Cannon(1976)]{cannon1976blind}
+M.~Cannon.
+\newblock Blind deconvolution of spatially invariant image blurs with phase.
+\newblock \emph{IEEE Transactions on Acoustics, Speech, and Signal Processing}, 24\penalty0 (1):\penalty0 58--63, 1976.
+\newblock \doi{10.1109/TASSP.1976.1162770}.
+
+\bibitem[Dong et~al.(2024)Dong, Roth, and Schiele]{dong2024dwdn}
+J~Dong, S~Roth, and B~Schiele.
+\newblock Dwdn: Deep wiener deconvolution network for non-blind image deblurring.
+\newblock \emph{arXiv preprint arXiv:2103.09962}, 2024.
+\newblock URL \url{https://doi.org/10.48550/arXiv.2103.09962}.
+
+\bibitem[Fish et~al.(1995)Fish, Brinicombe, Pike, and Walker]{fish1995blind}
+D.~A. Fish, A.~M. Brinicombe, E.~R. Pike, and J.~G. Walker.
+\newblock Blind deconvolution by means of the richardson--lucy algorithm.
+\newblock \emph{J. Opt. Soc. Am. A}, 12\penalty0 (1):\penalty0 58--65, Jan 1995.
+\newblock \doi{10.1364/JOSAA.12.000058}.
+\newblock URL \url{https://opg.optica.org/josaa/abstract.cfm?URI=josaa-12-1-58}.
+
+\bibitem[John et~al.(2020)John, Khanna, Prasad, and Pillai]{john2020fourier}
+A.~M John, K~Khanna, R.~R Prasad, and L.~G Pillai.
+\newblock A review on application of fourier transform in image restoration.
+\newblock In \emph{2020 Fourth International Conference on I-SMAC (IoT in Social, Mobile, Analytics and Cloud) (I-SMAC)}, pages 389--397, Palladam, India, 2020. IEEE.
+\newblock \doi{10.1109/I-SMAC49090.2020.9243510}.
+
+\bibitem[Kupyn et~al.(2018)Kupyn, Budzan, Mykhailych, Mishkin, and Matas]{kupyn2018deblurgan}
+O~Kupyn, V~Budzan, M~Mykhailych, D~Mishkin, and J~Matas.
+\newblock Deblurgan: Blind motion deblurring using conditional adversarial networks.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 2018.
+\newblock URL \url{https://doi.org/10.48550/arXiv.1711.07064}.
+
+\bibitem[Molina et~al.(2001)Molina, N{\'u}{\~n}ez, Cortijo, and Mateos]{molina2001image}
+Rafael Molina, Jorge N{\'u}{\~n}ez, Francisco~Jos{\'e} Cortijo, and Javier Mateos.
+\newblock Image restoration in astronomy: {A} {B}ayesian perspective.
+\newblock \emph{IEEE SIGNAL PROCESSING MAGAZINE}, 2001.
+\newblock URL \url{https://wwwusers.ts.infn.it/~milotti/Didattica/Bayes/pdfs/Molina&al_2001.pdf}.
+
+\bibitem[Nah et~al.(2016)Nah, Kim, and Lee]{nah2016multi}
+S~Nah, T.~H Kim, and K.~M Lee.
+\newblock Deep multi-scale convolutional neural network for dynamic scene deblurring.
+\newblock \emph{arXiv preprint arXiv:1612.02177}, 2016.
+\newblock URL \url{https://doi.org/10.48550/arXiv.1612.02177}.
+
+\bibitem[Richardson(1972)]{richardson1972bayesian}
+W.~H. Richardson.
+\newblock Bayesian-based iterative method of image restoration.
+\newblock \emph{Journal of the Optical Society of America}, 62\penalty0 (1):\penalty0 55--59, 1972.
+
+\bibitem[Saberi et~al.(1999)Saberi, Stoorvogel, and Sannuti]{saberi1999inverse}
+A~Saberi, A.~A Stoorvogel, and P~Sannuti.
+\newblock Inverse filtering and deconvolution.
+\newblock In \emph{Proceedings of the 1999 American Control Conference (Cat. No. 99CH36251)}, volume~5, pages 3270--3274, San Diego, CA, USA, 1999. IEEE.
+\newblock \doi{10.1109/ACC.1999.782369}.
+
+\bibitem[Wiener(1949)]{wiener1949extrapolation}
+Norbert Wiener.
+\newblock \emph{Extrapolation, Interpolation, and Smoothing of Stationary Time Series: With Engineering Applications}.
+\newblock MIT Press, 1949.
+
+\end{thebibliography}

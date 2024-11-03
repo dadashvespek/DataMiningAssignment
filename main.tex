@@ -1,0 +1,95 @@
+\documentclass[twoside,11pt]{article}
+
+% Additional packages
+\usepackage{jmlr2e}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+% Handy macros
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+\jmlrheading{1}{2024}{1-10}{4/11}{12/12}{Valentine Dumange}
+
+\ShortHeadings{Image Deblurring Using Adaptive Kernel Estimation}{Dumange}
+\firstpageno{1}
+
+\begin{document}
+
+\title{Image Deblurring Using Adaptive Kernel Estimation and Wiener Deconvolution}
+
+\author{\name Valentine Dumange \email valentine.dumange@tprs.stud.vu.lt \\
+\AND
+    \name [Author Name 2] \email [author2@example.com] \\
+\AND
+    \name Danial Shafaei \email danial.shafaei@mif.stud.vu.lt \\\\
+       \addr Data Science Study Programme\\
+       Faculty of Mathematics and Informatics}
+
+\editor{Jurgita Markevi\v{c}i\={u}t\.{e}}
+
+\maketitle
+
+\begin{abstract}
+With smartphones now widely accessible, capturing moments through photography has become effortless. However, various factors often degrade image quality, causing blurring and noise. For instance, Gaussian noise can arise in low-light environments, salt-and-pepper noise may result from data transmission errors, and common types of blur, like motion blur from hand tremors or Gaussian blur from defocusing, further reduce clarity. This study aims to utilize a machine learning regression model to predict blur kernels (Point Spread Functions, PSFs) corresponding to specific image features and apply Wiener deconvolution to restore image details. This approach introduces an adaptive method for blur kernel selection based on image characteristics, aiming to enhance image sharpness across different scenarios and effectively reduce blur artifacts.
+\end{abstract}
+\section{Introduction}
+Image blur is a persistent challenge in digital photography that significantly impacts image quality and visual information retention. The problem of image restoration has been a central focus in signal processing since the advent of digital imaging, with groundbreaking work by \citet{molina2001image} establishing Bayesian frameworks for astronomical image restoration. Early restoration techniques, as comprehensively reviewed by \citet{banham1997digital}, were primarily developed for space exploration, medical imaging applications, and astronomical observations. These applications demanded highly specialized deblurring approaches due to their unique imaging conditions and quality requirements. As digital photography evolved from its inception in the 1970s through Kodak's first digital camera prototype, to today's ubiquitous smartphone cameras, the challenge of blur has remained constant, though its sources have varied and become more complex. This degradation can occur through various mechanisms, including camera motion, defocus, or atmospheric turbulence, each presenting unique challenges for restoration algorithms. While numerous deblurring techniques exist, most either require precise knowledge of the blur kernel or rely on computationally intensive deep learning approaches that may not be practical in all scenarios, particularly in resource-constrained environments or real-time applications.
+\subsection{Problem Statement}
+Traditional deblurring methods often assume a uniform blur kernel across the entire image, a simplification first challenged by \citet{cannon1976blind} in their seminal work on blind deconvolution. Their research demonstrated that phase information in the frequency domain could be utilized for blur identification, laying the groundwork for modern blind deconvolution techniques. This uniform kernel assumption fails to account for spatially varying blur patterns commonly found in real-world photographs, where different regions of an image may experience different types and degrees of blur. While \citet{fish1995blind} made significant advances with their Richardson-Lucy algorithm approach to spatially-varying kernels in the 1990s, demonstrating impressive reconstruction quality with only 1.0\% error in point-spread function evaluation, the computational constraints of the era limited practical applications. Their work showed particular promise in handling noise-corrupted images, outperforming contemporary blind deconvolution methods. Today, existing adaptive methods typically require significant computational resources or extensive training data, limiting their practical applications, especially in mobile devices or embedded systems where processing power and memory are constrained. This creates a pressing need for more efficient, adaptive approaches that can maintain high restoration quality while reducing computational overhead.
+\subsection{Research Objectives}
+This study aims to:
+\begin{itemize}
+\item Develop a machine learning-based approach for adaptive kernel estimation that can handle various blur types
+\item Create an efficient method for predicting appropriate blur kernels based on local image characteristics
+\item Implement and validate a combined system using predicted kernels with Wiener deconvolution
+\item Evaluate the performance across different blur scenarios and noise conditions
+\end{itemize}
+\subsection{Significance}
+The proposed approach bridges the gap between computationally intensive deep learning methods and traditional fixed-kernel approaches. By developing a machine learning model that can predict appropriate blur kernels based on image features, we aim to achieve better deblurring results while maintaining reasonable computational requirements. This research has practical applications in:
+\begin{itemize}
+\item Mobile photography enhancement
+\item Medical image processing
+\item Surveillance system improvement
+\item Historical photo restoration
+\end{itemize}
+\subsection{Methodology Overview}
+Our approach combines traditional image processing techniques with modern machine learning methods. We first extract relevant features from blurred images, use these features to predict appropriate blur kernels through a regression model, and then apply Wiener deconvolution using the predicted kernels. This methodology allows for adaptive kernel selection while maintaining computational efficiency.
+\begin{keywords}
+  Image Deblurring, Adaptive Kernel Estimation, Wiener Deconvolution, Machine Learning, Noise Reduction
+\end{keywords}
+
+\section{Literature Review}
+
+\subsection{Introduction to Image Degradation Model}
+The mathematical model for image degradation is typically represented as:
+\[
+g(x, y) = h(x, y) * f(x, y) + n(x, y)
+\]
+where \( g(x, y) \) represents the degraded image, \( h(x, y) \) is the point spread function (PSF), \( f(x, y) \) is the original image, and \( n(x, y) \) is the added noise. This model underlies both non-blind and blind image deblurring methods, serving as the foundation for kernel estimation and image reconstruction processes.
+
+\subsection{Traditional Image Deblurring Methods}
+Traditional image deblurring methods generally consist of two steps: estimating the blur kernel (PSF) and reconstructing the image. This approach, known as non-blind image deblurring, involves restoring the observed blurred image \( g(x, y) \) using the estimated blur kernel \( h(x, y) \) to approximate the clear image \( f'(x, y) \). Because multiple methods are available for estimating blur kernels, non-blind deblurring is often considered an ill-posed problem.
+
+Early non-blind deblurring methods include Inverse Filtering \citep{saberi1999inverse}, Wiener filtering \citep{wiener1949extrapolation}, and Richardson-Lucy deconvolution \citep{richardson1972bayesian}. These techniques rely on an accurately known blur kernel to perform deblurring, making kernel estimation a necessary prerequisite.
+
+\subsection{Frequency Domain Approaches for PSF Estimation}
+In the frequency domain, the Fourier Transform (FFT) of a blurred image can assist in estimating the PSF. Different types of blur exhibit distinct frequency patterns; for instance, motion blur often appears as directional lines in the frequency spectrum, while Gaussian blur displays a radially symmetric pattern \citep{john2020fourier}. Analyzing these frequency patterns provides an initial estimate of the blur kernel, which can then be refined iteratively.
+
+Further methods, such as inverse filtering in the frequency domain, require estimating the blur kernel and the signal-to-noise ratio (SNR). Iterative estimation techniques can refine the PSF by adjusting it to better match the frequency characteristics of the image, commonly applied in blind deblurring.
+
+\subsection{Non-Blind Image Deblurring Using Deep Learning}
+Recently, deep learning techniques have been applied to non-blind deblurring tasks. For example, \citet{dong2024dwdn} employed deep learning to model the PSF, which is then combined with Wiener filtering to restore the image. These methods leverage deep learning’s ability to capture complex patterns, but they often require large datasets and extensive computational resources.
+
+\subsection{Blind Image Deblurring Techniques using Deep Learning}
+Blind image deblurring techniques do not require prior knowledge of the blur kernel (or PSF) and aim to estimate the kernel while recovering the original image. Deep learning models, such as the CNN-based approach by \citet{nah2016multi} and the DeblurGAN model \citep{kupyn2018deblurgan}, are capable of removing blur without explicitly estimating a blur kernel. These techniques can handle various blur types effectively, offering promising results in image deblurring tasks \citep{amrollahi2023survey}.
+
+\subsection{Machine Learning for Kernel Prediction and Noise Classification}
+Traditional machine learning techniques offer advantages in interpretability, smaller model size, and lack of reliance on large datasets, making them suitable for specific applications. These techniques can also aid in noise classification, allowing the development of distinct blur kernel prediction models for different blur types, such as Gaussian and motion blur. This targeted approach offers flexibility for situations where deep learning is not feasible.
+
+\subsection{Conclusion and Proposed Approach}
+While deep learning methods achieve high performance in image deblurring tasks, they often require large datasets and considerable computational resources. This project proposes a machine learning-based model that dynamically selects blur kernels based on specific image features, integrating traditional deblurring techniques with machine learning adaptability. By employing Wiener deconvolution, this approach aims to improve image clarity and reduce blur artifacts effectively across diverse scenarios.
+
+\bibliography{references}
+
+\end{document}
