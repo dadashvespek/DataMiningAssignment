@@ -2,6 +2,7 @@
 library(EBImage)
 library(caret)
 library(stats)
+library(ggplot2)
 
 # Function to generate a Gaussian kernel
 generate_gaussian_kernel <- function(size, sigma) {
@@ -53,8 +54,20 @@ apply_fft <- function(image) {
 
 # Function to extract features from an image
 extract_features <- function(image) {
-  sobel_x <- filter2(image, matrix(c(-1, 0, 1, -2, 0, 2, -1, 0, 1), nrow = 3))
-  sobel_y <- filter2(image, matrix(c(-1, -2, -1, 0, 0, 0, 1, 2, 1), nrow = 3))
+  sobel_x <- filter2(image, matrix(c(
+    -1, -2,  0,  2,  1,
+    -4, -8,  0,  8,  4,
+    -6, -12, 0, 12, 6,
+    -4, -8,  0,  8,  4,
+    -1, -2,  0,  2,  1
+  ), nrow = 3))
+  sobel_y <- filter2(image, matrix(c(
+    -1, -4, -6, -4, -1,
+    -2, -8, -12, -8, -2,
+    0,  0,   0,  0,  0,
+    2,  8,  12,  8,  2,
+    1,  4,   6,  4,  1
+  ), nrow = 3))
   sobel_combined <- sqrt(sobel_x^2 + sobel_y^2)
   spatial_features <- mean(sobel_combined)
   magnitude_spectrum <- apply_fft(image)
@@ -64,8 +77,16 @@ extract_features <- function(image) {
 
 # Define blur kernels
 blur_kernels <- list(
-  generate_gaussian_kernel(21, 1), generate_gaussian_kernel(21, 3),
-  generate_motion_kernel(21, 45), generate_motion_kernel(21, 90)
+  generate_gaussian_kernel(21, 1), 
+  generate_gaussian_kernel(21, 2),
+  generate_gaussian_kernel(21, 3), 
+  generate_gaussian_kernel(21, 4),
+  generate_gaussian_kernel(21, 5), 
+  generate_gaussian_kernel(21, 6),
+  generate_gaussian_kernel(21, 7),
+  generate_motion_kernel(21, 0), 
+  generate_motion_kernel(21, 45), 
+  generate_motion_kernel(21, 90)
 )
 
 # Relative folder containing images
@@ -194,6 +215,25 @@ results$SVM$models <- train_multi_output_model(
 )
 results$SVM$predictions <- predict_multi_output_model(results$SVM$models, X_test_df)
 
+# 4. Gradient Boost Machine (GBM)
+gbm_tuneGrid <- expand.grid(
+  n.trees = c(50, 100),
+  interaction.depth = c(1, 3),
+  shrinkage = c(0.01, 0.1),
+  n.minobsinnode = 10
+)
+results$GBM <- list()
+results$GBM$models <- train_multi_output_model(
+  X_train = X_train_df,
+  y_train = y_train,
+  method = "gbm",
+  tuneGrid = gbm_tuneGrid,
+  trControl = train_control,
+  model_dir = "./models_gbm"
+)
+results$GBM$predictions <- predict_multi_output_model(results$GBM$models, X_test_df)
+
+
 # Evaluate metrics for all models
 calculate_metrics <- function(actual, predicted) {
   mae_per_column <- colMeans(abs(actual - predicted))
@@ -221,3 +261,4 @@ for (model_name in names(metrics)) {
   cat("Global MSE:", metrics[[model_name]][[5]], "\n")
   cat("Global R²:", metrics[[model_name]][[6]], "\n")
 }
+
