@@ -249,6 +249,14 @@ calculate_metrics <- function(actual, predicted) {
 
 # Calculate metrics for each model
 metrics <- list()
+metrics_df <- data.frame(
+  Model = character(0),
+  MAE_Global = numeric(0),
+  MSE_Global = numeric(0),
+  R2_Global = numeric(0),
+  stringsAsFactors = FALSE
+)
+
 for (model_name in names(results)) {
   cat("Evaluating model:", model_name, "\n")
   metrics[[model_name]] <- calculate_metrics(y_test, results[[model_name]]$predictions)
@@ -260,5 +268,20 @@ for (model_name in names(metrics)) {
   cat("Global MAE:", metrics[[model_name]][[4]], "\n")
   cat("Global MSE:", metrics[[model_name]][[5]], "\n")
   cat("Global R²:", metrics[[model_name]][[6]], "\n")
+  
+  metrics_df <- rbind(metrics_df, data.frame(
+    Model = model_name,
+    MAE_Global = metrics[[model_name]][[4]],
+    MSE_Global = metrics[[model_name]][[5]],
+    R2_Global = metrics[[model_name]][[6]]
+  ))
 }
+
+
+#save the metrics results into a file
+write.csv(metrics_df, file = "model_metrics.csv", row.names = FALSE)
+
+cat("Metrics have been saved to 'model_metrics.csv'.\n")
+
+
 
