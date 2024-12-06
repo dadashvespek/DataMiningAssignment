@@ -60,20 +60,22 @@ extract_features <- function(image) {
     -6, -12, 0, 12, 6,
     -4, -8,  0,  8,  4,
     -1, -2,  0,  2,  1
-  ), nrow = 3))
+  ), nrow = 5))
   sobel_y <- filter2(image, matrix(c(
     -1, -4, -6, -4, -1,
     -2, -8, -12, -8, -2,
     0,  0,   0,  0,  0,
     2,  8,  12,  8,  2,
     1,  4,   6,  4,  1
-  ), nrow = 3))
+  ), nrow = 5))
   sobel_combined <- sqrt(sobel_x^2 + sobel_y^2)
   spatial_features <- mean(sobel_combined)
   magnitude_spectrum <- apply_fft(image)
   frequency_features <- mean(magnitude_spectrum)
   return(c(spatial_features, frequency_features))
 }
+
+## Creation of blurred images
 
 # Define blur kernels
 blur_kernels <- list(
@@ -84,9 +86,12 @@ blur_kernels <- list(
   generate_gaussian_kernel(21, 5), 
   generate_gaussian_kernel(21, 6),
   generate_gaussian_kernel(21, 7),
-  generate_motion_kernel(21, 0), 
-  generate_motion_kernel(21, 45), 
-  generate_motion_kernel(21, 90)
+  generate_motion_kernel(21, runif(1,0,90)), 
+  generate_motion_kernel(21, runif(1,0,90)),
+  generate_motion_kernel(21, runif(1,0,90)),
+  generate_motion_kernel(21, runif(1,0,180)),
+  generate_motion_kernel(21, runif(1,0,180)),
+  generate_motion_kernel(21, runif(1,0,180))
 )
 
 # Relative folder containing images
@@ -109,6 +114,9 @@ for (i in seq_along(image_files)) {
     cat(sprintf("Error processing file %s: %s\n", image_files[i], e$message))
   })
 }
+
+
+## Training part of the models
 
 # Convert data into matrices
 X <- do.call(rbind, data)
@@ -166,6 +174,9 @@ predict_multi_output_model <- function(models, X_test) {
   }
   return(predictions)
 }
+
+
+## If models are not done yet : 
 
 # Define train control
 train_control <- trainControl(method = "cv", number = 5)
@@ -234,6 +245,55 @@ results$GBM$models <- train_multi_output_model(
 results$GBM$predictions <- predict_multi_output_model(results$GBM$models, X_test_df)
 
 
+## If models were already made. 
+
+model_dirs <- list(
+  RF = "./models_rf",
+  GBM = "./models_gbm",
+  KNN = "./models_knn",
+  SVM = "./models_svm"
+)
+
+load_all_models <- function(model_dirs, n_outputs) {
+  models <- list()
+  
+  for (model_name in names(model_dirs)) {
+    cat(sprintf("Model loading : %s\n", model_name))
+    models[[model_name]] <- list()
+    
+    for (i in 1:n_outputs) {
+      model_path <- file.path(model_dirs[[model_name]], paste0("model_", model_name, "_output_", i, ".rds"))
+      
+      if (file.exists(model_path)) {
+        models[[model_name]][[i]] <- readRDS(model_path)
+        cat(sprintf("Model %s loaded from : %s\n", model_name, i, model_path))
+      } else {
+        stop(sprintf("Missing File for %s ", model_name, i, model_path))
+      }
+    }
+  }
+  
+  return(models) 
+}
+
+
+
+# Load all existing models in `results`
+results <- list()
+for (model_name in names(model_dirs)) {
+  cat(sprintf("Chargement des modèles pour %s...\n", model_name))
+  models_loaded <- load_all_models(model_dirs, ncol(y_test))[[model_name]]  # Passez la liste complète `model_dirs`
+  results[[model_name]] <- list(
+    models = models_loaded,
+    predictions = predict_multi_output_model(models_loaded, X_test_df)
+  )
+}
+
+
+##Evaluation of models
+
+##with metrics
+
 # Evaluate metrics for all models
 calculate_metrics <- function(actual, predicted) {
   mae_per_column <- colMeans(abs(actual - predicted))
@@ -282,6 +342,75 @@ for (model_name in names(metrics)) {
 write.csv(metrics_df, file = "model_metrics.csv", row.names = FALSE)
 
 cat("Metrics have been saved to 'model_metrics.csv'.\n")
+
+
+
+##with images
+
+# Output directory
+output_folder <- "./image_results"
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder, recursive = TRUE)
+}
+
+# Function to normalize an image
+normalize_image <- function(image) {
+  normalized_image <- (image - min(image)) / (max(image) - min(image))
+  return(normalized_image)
+}
+
+# Process and save results for the first 20 images
+num_images_to_process <- 20  # Number of images to process
+
+for (i in 1:num_images_to_process) {
+  cat(sprintf("Processing image %d/%d\n", i, num_images_to_process))
+  
+  # Load the original image
+  image_path <- image_files[-train_indices][i]
+  original_image <- readImage(image_path)
+  original_image <- channel(original_image, "gray")  # Convert to grayscale
+  
+  # Normalize the original image
+  normalized_original <- normalize_image(original_image)
+  
+  # Retrieve the ground truth kernel
+  true_kernel <- matrix(y_test[i, ], nrow = 21, ncol = 21)
+  
+  # Apply blur to the image
+  blurred_image <- filter2(original_image, true_kernel)
+  
+  # Normalize the blurred image
+  normalized_blurred <- normalize_image(blurred_image)
+  
+  # 1. Save the original image
+  writeImage(normalized_original, file.path(output_folder, sprintf("image_%d_original.png", i)))
+  
+  # 2. Save the blurred image
+  writeImage(normalized_blurred, file.path(output_folder, sprintf("image_%d_blurred.png", i)))
+  
+  # 3. Save the ground truth kernel as an image
+  writeImage(normalize_image(true_kernel), file.path(output_folder, sprintf("image_%d_true_kernel.png", i)))
+  
+  # 4. Save the predicted kernels for each model
+  for (model_name in names(results)) {
+    cat(sprintf("Processing predicted kernel for model: %s\n", model_name))
+    
+    predicted_kernel <- matrix(
+      results[[model_name]]$predictions[i, ],
+      nrow = 21,
+      ncol = 21
+    )
+    
+    # Normalize the predicted kernel
+    normalized_predicted_kernel <- normalize_image(predicted_kernel)
+    
+    # Save the predicted kernel
+    writeImage(
+      normalized_predicted_kernel,
+      file.path(output_folder, sprintf("image_%d_predicted_kernel_%s.png", i, model_name))
+    )
+  }
+}
 
 
 
