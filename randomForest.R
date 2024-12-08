@@ -347,7 +347,7 @@ cat("Metrics have been saved to 'model_metrics.csv'.\n")
 
 ##with images
 
-# Output directory
+
 output_folder <- "./image_results"
 if (!dir.exists(output_folder)) {
   dir.create(output_folder, recursive = TRUE)
@@ -359,8 +359,7 @@ normalize_image <- function(image) {
   return(normalized_image)
 }
 
-# Process and save results for the first 20 images
-num_images_to_process <- 20  # Number of images to process
+num_images_to_process <- 20 
 
 for (i in 1:num_images_to_process) {
   cat(sprintf("Processing image %d/%d\n", i, num_images_to_process))
@@ -369,29 +368,19 @@ for (i in 1:num_images_to_process) {
   image_path <- image_files[-train_indices][i]
   original_image <- readImage(image_path)
   original_image <- channel(original_image, "gray")  # Convert to grayscale
-  
-  # Normalize the original image
   normalized_original <- normalize_image(original_image)
   
   # Retrieve the ground truth kernel
   true_kernel <- matrix(y_test[i, ], nrow = 21, ncol = 21)
   
-  # Apply blur to the image
+  # Apply blur to the image and normalize
   blurred_image <- filter2(original_image, true_kernel)
-  
-  # Normalize the blurred image
   normalized_blurred <- normalize_image(blurred_image)
   
-  # 1. Save the original image
+  # Save the original and blurred images such as the ground truth kernel and the predicted ones
   writeImage(normalized_original, file.path(output_folder, sprintf("image_%d_original.png", i)))
-  
-  # 2. Save the blurred image
   writeImage(normalized_blurred, file.path(output_folder, sprintf("image_%d_blurred.png", i)))
-  
-  # 3. Save the ground truth kernel as an image
   writeImage(normalize_image(true_kernel), file.path(output_folder, sprintf("image_%d_true_kernel.png", i)))
-  
-  # 4. Save the predicted kernels for each model
   for (model_name in names(results)) {
     cat(sprintf("Processing predicted kernel for model: %s\n", model_name))
     
@@ -401,7 +390,6 @@ for (i in 1:num_images_to_process) {
       ncol = 21
     )
     
-    # Normalize the predicted kernel
     normalized_predicted_kernel <- normalize_image(predicted_kernel)
     
     # Save the predicted kernel
@@ -411,6 +399,76 @@ for (i in 1:num_images_to_process) {
     )
   }
 }
+
+
+# Quadrant Reorganization function (ifftshift-like)
+ifftshift <- function(image) {
+  nr <- nrow(image)
+  nc <- ncol(image)
+  shifted_image <- image[c((nr %/% 2 + 1):nr, 1:(nr %/% 2)), 
+                         c((nc %/% 2 + 1):nc, 1:(nc %/% 2))]
+  return(shifted_image)
+}
+
+# Wiener deconvolution function to restore images
+wiener_deconvolution <- function(blurred_image, kernel, snr) {
+  
+  kernel <- resize_kernel(kernel, dim(blurred_image)) # Kernel size adjustment
+  fft_blurred <- fft(blurred_image)
+  fft_kernel <- fft(kernel, dim(blurred_image))
+  
+  denominator <- abs(fft_kernel)^2 + snr
+  wiener_result <- fft_blurred * Conj(fft_kernel) / denominator
+  
+  restored_image <- fft(wiener_result, inverse = TRUE)
+  restored_image <- ifftshift(Re(restored_image)) # Quadrant reorganization
+  restored_image <- (restored_image - min(restored_image)) / (max(restored_image) - min(restored_image))
+  
+  ## normalization verification
+  #cat("restored image (min, max) :", min(restored_image), max(restored_image), "\n")
+  
+  return(restored_image)
+}
+
+# Image restoration
+restored_output_folder <- "./restored_images"
+if (!dir.exists(restored_output_folder)) dir.create(restored_output_folder, recursive = TRUE)
+
+snr_values <- c(0.1, 0.01, 0.001, 0.0001)
+num_images_to_process <- 20
+
+snr_folders <- sapply(snr_values, function(snr) {
+  snr_folder <- file.path(restored_output_folder, sprintf("snr_%f", snr))
+  if (!dir.exists(snr_folder)) dir.create(snr_folder)
+  return(snr_folder)
+})
+
+
+for (i in 1:num_images_to_process) {
+  cat(sprintf("Processing image %d/%d\n", i, num_images_to_process))
+  
+  blurred_image_path <- file.path(output_folder, sprintf("image_%d_blurred.png", i))
+  blurred_image <- readImage(blurred_image_path)
+  
+  for (model_name in names(results)) {
+    cat(sprintf("Applying Wiener deconvolution with model: %s\n", model_name))
+    
+    predicted_kernel <- matrix(results[[model_name]]$predictions[i, ], nrow = 21, ncol = 21)
+    
+    for (snr_idx in seq_along(snr_values)) {
+      snr <- snr_values[snr_idx] # Try different values of snr
+      restored_image <- wiener_deconvolution(blurred_image, predicted_kernel, snr) # Apply Wiener Deconvolution
+      
+      # Save the restored image
+      writeImage(
+        restored_image,
+        file.path(snr_folders[snr_idx], sprintf("restored_image_%d_%s.png", i, model_name))
+      )
+    }
+  }
+}
+
+cat("Restoration completed. Restored images saved in:", restored_output_folder, "\n")
 
 
 
