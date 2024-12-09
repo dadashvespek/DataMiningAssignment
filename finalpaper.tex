@@ -68,6 +68,37 @@ The proposed approach bridges the gap between computationally intensive deep lea
 \singlespacing
 Our approach combines traditional image processing techniques with modern machine learning methods. We first extract relevant features from blurred images, use these features to predict appropriate blur kernels through a regression model, and then apply Wiener deconvolution using the predicted kernels. This methodology allows for adaptive kernel selection while maintaining computational efficiency.
 
+\section{Literature Review}
+
+\subsection{Introduction to Image Degradation Model}
+The mathematical model for image degradation is typically represented as:
+\[
+g(x, y) = h(x, y) * f(x, y) + n(x, y)
+\]
+where \( g(x, y) \) represents the degraded image, \( h(x, y) \) is the point spread function (PSF), \( f(x, y) \) is the original image, and \( n(x, y) \) is the added noise. This model underlies both non-blind and blind image deblurring methods, serving as the foundation for kernel estimation and image reconstruction processes.
+
+\subsection{Traditional Image Deblurring Methods}
+Traditional image deblurring methods generally consist of two steps: estimating the blur kernel (PSF) and reconstructing the image. This approach, known as non-blind image deblurring, involves restoring the observed blurred image \( g(x, y) \) using the estimated blur kernel \( h(x, y) \) to approximate the clear image \( f'(x, y) \). Because multiple methods are available for estimating blur kernels, non-blind deblurring is often considered an ill-posed problem.
+
+Early non-blind deblurring methods include Inverse Filtering \citep{saberi1999inverse}, Wiener filtering \citep{wiener1949extrapolation}, and Richardson-Lucy deconvolution \citep{richardson1972bayesian}. These techniques rely on an accurately known blur kernel to perform deblurring, making kernel estimation a necessary prerequisite.
+
+\subsection{Frequency Domain Approaches for PSF Estimation}
+In the frequency domain, the Fourier Transform (FFT) of a blurred image can assist in estimating the PSF. Different types of blur exhibit distinct frequency patterns; for instance, motion blur often appears as directional lines in the frequency spectrum, while Gaussian blur displays a radially symmetric pattern \citep{john2020fourier}. Analyzing these frequency patterns provides an initial estimate of the blur kernel, which can then be refined iteratively.
+
+Further methods, such as inverse filtering in the frequency domain, require estimating the blur kernel and the signal-to-noise ratio (SNR). Iterative estimation techniques can refine the PSF by adjusting it to better match the frequency characteristics of the image, commonly applied in blind deblurring.
+
+\subsection{Non-Blind Image Deblurring Using Deep Learning}
+Recently, deep learning techniques have been applied to non-blind deblurring tasks. For example, \citet{dong2024dwdn} employed deep learning to model the PSF, which is then combined with Wiener filtering to restore the image. These methods leverage deep learning’s ability to capture complex patterns, but they often require large datasets and extensive computational resources.
+
+\subsection{Blind Image Deblurring Techniques using Deep Learning}
+Blind image deblurring techniques do not require prior knowledge of the blur kernel (or PSF) and aim to estimate the kernel while recovering the original image. Deep learning models, such as the CNN-based approach by \citet{nah2016multi} and the DeblurGAN model \citep{kupyn2018deblurgan}, are capable of removing blur without explicitly estimating a blur kernel. These techniques can handle various blur types effectively, offering promising results in image deblurring tasks \citep{amrollahi2023survey}.
+
+\subsection{Machine Learning for Kernel Prediction and Noise Classification}
+Traditional machine learning techniques offer advantages in interpretability, smaller model size, and lack of reliance on large datasets, making them suitable for specific applications. These techniques can also aid in noise classification, allowing the development of distinct blur kernel prediction models for different blur types, such as Gaussian and motion blur. This targeted approach offers flexibility for situations where deep learning is not feasible.
+
+\subsection{Conclusion and Proposed Approach}
+While deep learning methods achieve high performance in image deblurring tasks, they often require large datasets and considerable computational resources. This project proposes a machine learning-based model that dynamically selects blur kernels based on specific image features, integrating traditional deblurring techniques with machine learning adaptability. By employing Wiener deconvolution, this approach aims to improve image clarity and reduce blur artifacts effectively across diverse scenarios.
+
 
 \section{Data}
 
@@ -126,7 +157,7 @@ The Fast Fourier Transform (FFT) of an image converts the spatial domain represe
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure3.jpg}
+\includegraphics[width=0.6\textwidth]{figure3.jpg}
 \caption{FFT illustration: proximity to the center represents low-frequency features, while the outer regions highlight high-frequency details.}
 \end{figure}
 
@@ -134,7 +165,7 @@ Compared to spatial-domain features, which are more intuitive for human visual p
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure4.jpg}
+\includegraphics[width=0.6\textwidth]{figure4.jpg}
 \caption{Linear Motion FFT Plot. This plot demonstrates the relationship between the blur kernel and the FFT of the blurred image.}
 \end{figure}
 
@@ -166,7 +197,7 @@ H(x, y) =
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure5.jpg}
+\includegraphics[width=0.6\textwidth]{figure5.jpg}
 \caption{Illustration of blur kernel.}
 \end{figure}
 
@@ -175,7 +206,7 @@ We assume that the blur kernel has a size of 21x21. A randomly generated blur ke
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure6.jpg}
+\includegraphics[width=0.65\textwidth]{figure6.jpg}
 \caption{Training and Application Flowchart.}
 \end{figure}
 
