@@ -1,0 +1,215 @@
+\documentclass[twoside,11pt]{article}
+
+% Additional packages
+\usepackage{jmlr2e}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{natbib} % For citations
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{float}
+
+
+% Handy macros
+\newcommand{\dataset}{{\cal D}}
+\newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
+
+
+\jmlrheading{1}{2024}{1-5}{4/11}{4/11}{Valentine Dumange}
+
+\ShortHeadings{Image Deblurring Using Adaptive Kernel Estimation}{Dumange}
+\firstpageno{1}
+
+
+\begin{document}
+
+\title{Image Deblurring Using Adaptive Kernel Estimation and Wiener Deconvolution}
+
+\author{\name Valentine Dumange \email valentine.dumange@tprs.stud.vu.lt \\
+\AND
+    \name Ying Tong Chen \email chen.ying-tong@tprs.stud.vu.lt\\
+\AND
+    \name Danial Shafaei \email danial.shafaei@mif.stud.vu.lt \\\\
+       \addr Data Science Study Programme\\
+       Faculty of Mathematics and Informatics}
+
+\editor{Jurgita Markevi\v{c}i\={u}t\.{e}}
+
+\maketitle
+
+\begin{abstract}
+With smartphones now widely accessible, capturing moments through photography has become effortless. However, various factors often degrade image quality, causing blurring and noise. For instance, Gaussian blur due to the defocus of a camera, motion blur from hand tremors, further reduce clarity. This study aims to utilize a machine learning regression model to predict blur kernels (Point Spread Functions, PSFs) corresponding to specific image features and apply Wiener deconvolution to restore image details.
+\end{abstract}
+
+\begin{keywords}
+  Image Deblurring, Adaptive Kernel Estimation, Wiener Deconvolution, Machine Learning, Noise Reduction
+\end{keywords}
+
+\section{Introduction}
+Image blur is a persistent challenge in digital photography that significantly impacts image quality and visual information retention. The problem of image restoration has been a central focus in signal processing since the advent of digital imaging, with groundbreaking work by \citet{molina2001image} establishing Bayesian frameworks for astronomical image restoration. Early restoration techniques, as comprehensively reviewed by \citet{banham1997digital}, were primarily developed for space exploration, medical imaging applications, and astronomical observations. These applications demanded highly specialized deblurring approaches due to their unique imaging conditions and quality requirements. As digital photography evolved from its inception in the 1970s through Kodak's first digital camera prototype, to today's ubiquitous smartphone cameras, the challenge of blur has remained constant, though its sources have varied and become more complex. This degradation can occur through various mechanisms, including camera motion, defocus, or atmospheric turbulence, each presenting unique challenges for restoration algorithms. While numerous deblurring techniques exist, most either require precise knowledge of the blur kernel or rely on computationally intensive deep learning approaches that may not be practical in all scenarios, particularly in resource-constrained environments or real-time applications.
+\singlespacing
+Traditional deblurring methods often assume a uniform blur kernel across the entire image, a simplification first challenged by \citet{cannon1976blind} in their seminal work on blind deconvolution. Their research demonstrated that phase information in the frequency domain could be utilized for blur identification, laying the groundwork for modern blind deconvolution techniques. This uniform kernel assumption fails to account for spatially varying blur patterns commonly found in real-world photographs, where different regions of an image may experience different types and degrees of blur. While \citet{fish1995blind} made significant advances with their Richardson-Lucy algorithm approach to spatially-varying kernels in the 1990s, demonstrating impressive reconstruction quality with only 1.0\% error in point-spread function evaluation, the computational constraints of the era limited practical applications. Their work showed particular promise in handling noise-corrupted images, outperforming contemporary blind deconvolution methods. Today, existing adaptive methods typically require significant computational resources or extensive training data, limiting their practical applications, especially in mobile devices or embedded systems where processing power and memory are constrained. This creates a pressing need for more efficient, adaptive approaches that can maintain high restoration quality while reducing computational overhead.
+\singlespacing
+This study aims to:
+\begin{itemize}
+\item Develop a machine learning-based approach for adaptive kernel estimation that can handle various blur types
+\item Create an efficient method for predicting appropriate blur kernels based on local image characteristics
+\item Implement and validate a combined system using predicted kernels with Wiener deconvolution
+\item Evaluate the performance across different blur scenarios and noise conditions
+\end{itemize}
+\singlespacing
+The proposed approach bridges the gap between computationally intensive deep learning methods and traditional fixed-kernel approaches. By developing a machine learning model that can predict appropriate blur kernels based on image features, we aim to achieve better deblurring results while maintaining reasonable computational requirements. This research has practical applications in:
+\begin{itemize}
+\item Mobile photography enhancement
+\item Medical image processing
+\item Surveillance system improvement
+\item Historical photo restoration
+\end{itemize}
+\singlespacing
+Our approach combines traditional image processing techniques with modern machine learning methods. We first extract relevant features from blurred images, use these features to predict appropriate blur kernels through a regression model, and then apply Wiener deconvolution using the predicted kernels. This methodology allows for adaptive kernel selection while maintaining computational efficiency.
+
+
+\section{Data}
+
+\subsection{Dataset}
+We chose the DIV2K (DIVerse 2K Resolution Dataset) as our training dataset. Although it is widely used for image super-resolution tasks, its high quality and diverse content make it an excellent choice for our image deblurring project. DIV2K consists of 1,000 high-resolution images (typically 2048×1080 or 2048×2048) featuring various scenes such as natural landscapes, buildings, animals, and people. The dataset’s rich variety of textures and structures helps ensure robust model performance across different scenarios.
+
+\subsection{Data Preprocessing}
+To enhance training efficiency, we randomly cropped the original images into 256×256 patches. However, we observed that some images were already blurred due to camera focal length issues. To address this, we manually removed such images before applying blur kernels.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure1.jpg}
+\caption{Illustration of the training dataset. Some images focus only on objects in the foreground, which may result in nearly blurred patches during random cropping. To address this, we manually remove such cases. Additionally, images with large areas of uniform color are also filtered out beforehand.}
+\end{figure}
+
+\subsection{Feature Extraction}
+
+\subsubsection{Sobel}
+The Sobel operator is a widely used edge-detection technique in image processing and computer vision. It computes the gradient magnitude of an image by applying two convolutional kernels, one for detecting horizontal changes (\(x\)-direction) and another for vertical changes (\(y\)-direction). These kernels emphasize regions with high spatial frequency, such as edges. The Sobel operator is computationally efficient and robust to noise, making it ideal for identifying edges in applications like object recognition, boundary detection, and feature extraction. Its simplicity and effectiveness have made it a foundational tool in image analysis.
+
+\[
+G_x =
+\begin{bmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1
+\end{bmatrix},
+\quad
+G_y =
+\begin{bmatrix}
+-1 & -2 & -1 \\
+0 &  0 &  0 \\
+1 &  2 &  1
+\end{bmatrix},
+\quad G =
+\sqrt{G_x^2 + G_y^2}
+\]
+
+The Sobel operator is used to detect edges in an image by computing directional gradients. It consists of two kernels:
+\begin{itemize}
+\item When the kernel  $G_x$ is applied to an image, it emphasizes horizontal features by calculating the gradient in the horizontal direction.
+\item When the kernel  $G_y$  is applied, it highlights vertical features by calculating the gradient in the vertical direction.
+Together, these kernels work to capture the directional gradients G within an image, highlighting edges and structural details.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure2.jpg}
+\caption{Illustration of Sobel Operator in Edge Detection.}
+\end{figure}
+
+In this work, the Sobel operator is utilized as a feature extraction method, with the goal of aiding the regression model in identifying essential patterns and improving its predictive performance.
+
+\subsubsection{Fast Fourier Transform (FFT)}
+The Fast Fourier Transform (FFT) of an image converts the spatial domain representation of the image into the frequency domain. This transformation represents the image as a combination of sinusoidal waves with varying frequencies and amplitudes. The FFT helps analyze and process the frequency components, such as identifying high-frequency details (edges, noise) or low-frequency patterns (smooth regions). It is widely used in image processing tasks like filtering, compression, and feature extraction, as it enables efficient manipulation and enhancement of image characteristics that are difficult to address in the spatial domain.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure3.jpg}
+\caption{FFT illustration: proximity to the center represents low-frequency features, while the outer regions highlight high-frequency details.}
+\end{figure}
+
+Compared to spatial-domain features, which are more intuitive for human visual perception, the frequency domain often provides insights into details that may not be easily noticeable to the naked eye. This is particularly evident in cases where the image contains linear motion blur. In such scenarios, the frequency-domain representation clearly highlights patterns and directional features of the blur, enabling precise analysis and identification of the blur’s characteristics.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure4.jpg}
+\caption{Linear Motion FFT Plot. This plot demonstrates the relationship between the blur kernel and the FFT of the blurred image.}
+\end{figure}
+
+
+\section{Methodology}
+
+\subsection{Blur Kernel Settings}
+In this research, we focus on two different types of blur: Gaussian blur and motion blur.
+Gaussian blur is a type of image blurring that uses a Gaussian function to smooth the image. It is often used to reduce noise or detail, and it also can be used to imitate the defocus of a camera.
+The Gaussian blur kernel is derived from the Gaussian function and can be described as:
+
+\subsubsection{Gaussian Blur}
+Gaussian blur is modeled using the function:
+\[
+G(x, y) = \frac{1}{2\pi\sigma^2} \exp\left(-\frac{x^2 + y^2}{2\sigma^2}\right)
+\]
+ \( (x, y) \) are the coordinates of a point in the kernel (relative to center, and \( \sigma \) is the standard deviation, which controls the spread of the blur (larger  \( \sigma \) means a more blurred image).
+As for motion blur, it simulates the effect of a moving camera or object. The blur is directional, and the kernel typically represents a linear motion along a specific angle.
+
+\subsubsection{Motion Blur}
+For a motion blur of length  L  along an angle \(\theta\) , the kernel  H(x, y)  can be represented as:
+\[
+H(x, y) =
+\begin{cases}
+\frac{1}{L} & \text{if } |x \cos \theta + y \sin \theta| \leq \frac{L}{2}, \\
+0 & \text{otherwise}.
+\end{cases}
+\]
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure5.jpg}
+\caption{Illustration of blur kernel.}
+\end{figure}
+
+\subsection{Training Process}
+We assume that the blur kernel has a size of 21x21. A randomly generated blur kernel is then applied to a cropped portion of the image. Afterward, we train different machine learning regression models to learn the relationship between the blurred image and its corresponding original version. These models aim to recover the original image by predicting the underlying structure and details, which have been obscured by the blur. By using various regression algorithms, we assess how well each model can generalize and handle the impact of the blur on image quality, ultimately improving the accuracy of blur estimation and restoration.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure6.jpg}
+\caption{Training and Application Flowchart.}
+\end{figure}
+
+We selected three classic machine learning regression models for training, including Random Forest, Support Vector Machines (SVM), and k-Nearest Neighbors (k-NN).
+
+To predict the blur kernel, we used two approaches: The first approach predicts the sigma of the Gaussian blur kernel and the angle of the motion blur kernel. The second approach involves having the regression model directly output a 21x21-sized blur kernel.
+
+\subsection{Wiener Filter}
+The Wiener Filter is not perfect. If the appropriate blur kernel is not found, it becomes difficult to restore a clear image. This process often requires multiple attempts to achieve satisfactory results. As a result, we aim to leverage machine learning techniques to more effectively identify the appropriate blur kernel. By using machine learning, we hope to improve the accuracy and efficiency of kernel estimation, enabling more reliable image restoration without the need for trial-and-error in finding the optimal blur kernel.
+
+Let  g(x, y)  be the observed (blurred) image,  f(x, y)  be the original (clean) image, and  h(x, y)  be the blur kernel.
+
+The Wiener filter aims to estimate the original image  f(x, y)  by applying a filter  H(w)  to the frequency-domain representation of the blurred image. The basic formula in the frequency domain is:
+
+\[
+\hat{F}(w) = \frac{H(w)^* \cdot G(w)}{|H(w)|^2 + \text{noise}}
+\]
+where \(F(w)\) is the Fourier transform of the estimated original image; \(G(w)\) is the Fourier transform of the observed image g(x, y); \(H(w)\) is the Fourier transform of the blur kernel h(x, y); \(H(w)^*\) is the complex conjugate of \(H(w)\); \(|H(w)|^2\) is the squared magnitude of the blur kernel in the frequency domain.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure7.jpg}
+\caption{Deblurring the image using the Wiener filter with different blur kernels. 
+Finding the appropriate blur kernel  h(x, y)  is crucial for effectively restoring a blurred image. Once we identify the correct kernel, we can better recover the original image and reduce the effects of blurring.}
+
+\end{figure}
+
+\section{Results}
+
+\subsection{Predicting Sigma Value or Angle of the Blur Kernel}
+Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex.
+
+\bibliography{references}    % This matches the name of your .bib file (without .bib)
+
+\end{document}
+
+
