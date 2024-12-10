@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{setspace}
 \usepackage{float}
+\usepackage{placeins}
 
 
 % Handy macros
@@ -15,9 +16,9 @@
 \newcommand{\fracpartial}[2]{\frac{\partial #1}{\partial  #2}}
 
 
-\jmlrheading{1}{2024}{1-5}{4/11}{4/11}{Valentine Dumange}
+\jmlrheading{1}{2024}{1-5}{10/12}{10/12}{Valentine Dumange, Ying Tong Chen, Danial Shafaei}
 
-\ShortHeadings{Image Deblurring Using Adaptive Kernel Estimation}{Dumange}
+\ShortHeadings{Image Deblurring Using Adaptive Kernel Estimation}{Dumange, Chen, Shafaei}
 \firstpageno{1}
 
 
@@ -202,7 +203,9 @@ H(x, y) =
 \end{figure}
 
 \subsection{Training Process}
-We assume that the blur kernel has a size of 21x21. A randomly generated blur kernel is then applied to a cropped portion of the image. Afterward, we train different machine learning regression models to learn the relationship between the blurred image and its corresponding original version. These models aim to recover the original image by predicting the underlying structure and details, which have been obscured by the blur. By using various regression algorithms, we assess how well each model can generalize and handle the impact of the blur on image quality, ultimately improving the accuracy of blur estimation and restoration.
+Our training methodology centers on developing an effective pipeline for blur kernel estimation through machine learning. After the initial preprocessing steps, we implement a two-stage feature extraction process that combines spatial and frequency domain information. These are complementary features that help capture both local structural details and also global blur patterns that are essential for accurate kernel prediction.
+The regression task is a unique challenge due to the complex relationship between image features and blur characteristics. To address this, we explore two distinct prediction strategies. The first strategy, which we call the parameter-based approach, treats blur estimation as a low-dimensional regression problem. For Gaussian blur, the model predicts only the sigma value, while for motion blur, it estimates the angle of motion. This approach benefits from its simplicity and direct connection to the physical properties of the blur process.
+Our second strategy, the direct kernel prediction approach, is a more ambitious goal. Instead of predicting blur parameters, the model attempts to reconstruct the entire 21×21 kernel matrix directly from the extracted features and although this increases the complexity of the regression task, it offers greater flexibility in capturing real-world blur patterns that may deviate from ideal parametric models.
 
 \begin{figure}[H]
 \centering
@@ -210,37 +213,84 @@ We assume that the blur kernel has a size of 21x21. A randomly generated blur ke
 \caption{Training and Application Flowchart.}
 \end{figure}
 
-We selected three classic machine learning regression models for training, including Random Forest, Support Vector Machines (SVM), and k-Nearest Neighbors (k-NN).
-
-To predict the blur kernel, we used two approaches: The first approach predicts the sigma of the Gaussian blur kernel and the angle of the motion blur kernel. The second approach involves having the regression model directly output a 21x21-sized blur kernel.
+We apply these strategies using three different regression algorithms, each chosen for its particular strengths. Random Forest Regression, which uses ensemble learning to handle the non-linear relationships between image features and blur patterns. Support Vector Machines with specialized kernels help capture complex mappings in the feature space, while k-Nearest Neighbors provides locally adaptive predictions that can accommodate varying blur characteristics across different image regions.
+The testing phase implements an end-to-end pipeline where new images undergo the same feature extraction process before kernel prediction. These predicted kernels then feed into the Wiener filter for final image restoration. This systematic approach lets us check both the accuracy of our kernel predictions and also the effectiveness in practical deblurring applications.
 
 \subsection{Wiener Filter}
-The Wiener Filter is not perfect. If the appropriate blur kernel is not found, it becomes difficult to restore a clear image. This process often requires multiple attempts to achieve satisfactory results. As a result, we aim to leverage machine learning techniques to more effectively identify the appropriate blur kernel. By using machine learning, we hope to improve the accuracy and efficiency of kernel estimation, enabling more reliable image restoration without the need for trial-and-error in finding the optimal blur kernel.
-
-Let  g(x, y)  be the observed (blurred) image,  f(x, y)  be the original (clean) image, and  h(x, y)  be the blur kernel.
-
-The Wiener filter aims to estimate the original image  f(x, y)  by applying a filter  H(w)  to the frequency-domain representation of the blurred image. The basic formula in the frequency domain is:
+The Wiener filter provides a mathematical framework for image restoration, but its effectiveness depends heavily on accurate blur kernel estimation. Traditional approaches to kernel estimation often rely on trial-and-error, making the restoration process time-consuming and potentially unreliable. This limitation motivates our use of machine learning techniques to predict appropriate blur kernels directly from image features. In the frequency domain, the Wiener filter reconstructs an estimate of the original image by applying a carefully designed filter to the blurred input. Working with frequency representations allows us to treat the blur as a multiplication operation rather than a more complex convolution. Let g(x,y) represent our observed blurred image, f(x,y) be the unknown clean image we aim to recover, and h(x,y) denote the blur kernel responsible for the degradation.
+The core operation of the Wiener filter in the frequency domain takes the form:
 
 \[
 \hat{F}(w) = \frac{H(w)^* \cdot G(w)}{|H(w)|^2 + \text{noise}}
 \]
-where \(F(w)\) is the Fourier transform of the estimated original image; \(G(w)\) is the Fourier transform of the observed image g(x, y); \(H(w)\) is the Fourier transform of the blur kernel h(x, y); \(H(w)^*\) is the complex conjugate of \(H(w)\); \(|H(w)|^2\) is the squared magnitude of the blur kernel in the frequency domain.
+where \(F(w)\) is the Fourier transform of the estimated original image; \(G(w)\) is the Fourier transform of the observed image g(x, y); \(H(w)\) is the Fourier transform of the blur kernel h(x, y); \(H(w)^*\) is the complex conjugate of \(H(w)\); \(|H(w)|^2\) is the squared magnitude of the blur kernel in the frequency domain. The denominator term \(|H(w)|^2\) + noise helps stabilize the restoration process, preventing the amplification of noise in frequencies where the blur kernel has very small values.
+The presence of the noise term in the denominator highlights a key practical consideration - there is always a trade-off between blur removal and noise amplification. A larger noise term produces a more conservative restoration that preserves some blur but suppresses noise, while a smaller term attempts more aggressive deblurring at the risk of amplifying noise artifacts. 
 
-\begin{figure}[H]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.7\textwidth]{figure7.jpg}
+\includegraphics[width=0.4\textwidth]{figure7.jpg}
 \caption{Deblurring the image using the Wiener filter with different blur kernels. 
 Finding the appropriate blur kernel  h(x, y)  is crucial for effectively restoring a blurred image. Once we identify the correct kernel, we can better recover the original image and reduce the effects of blurring.}
-
 \end{figure}
 
+\FloatBarrier 
+
 \section{Results}
+Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex. (Table \ref{tab:performance}).
 
-\subsection{Predicting Sigma Value or Angle of the Blur Kernel}
-Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex.
+\begin{table}[h]
+\caption{Performance Metrics for Different Models}
+\label{tab:performance}
+\begin{center}
+\begin{tabular}{lccc}
+\hline
+Model & MAE\_Global & MSE\_Global & R2\_Global \\
+\hline
+RF & 0.01264755 & 0.00214398 & 0.7748670 \\
+KNN & 0.01264454 & 0.00204710 & 0.7968311 \\
+SVM & 0.00933183 & 0.00214543 & 0.7891896 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
-\bibliography{references}    % This matches the name of your .bib file (without .bib)
+The performance metrics reveal several key insights about the models' capabilities in predicting blur parameters:
+
+The Support Vector Machine (SVM) achieved the lowest Mean Absolute Error (MAE) at $0.00933$, approximately $26\%$ better than both Random Forest and KNN models which had MAE values around $0.0126$. This suggests that SVM's ability to handle nonlinear relationships through kernel transformations provided some advantage in capturing blur patterns.
+
+However, examining Mean Squared Error (MSE) shows a different pattern. KNN achieved the lowest MSE at $0.00205$, while RF and SVM had nearly identical MSE values of $0.00214$. The formula for MSE is:
+
+$$
+MSE = \frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y_i})^2
+$$
+
+The lower MSE for KNN indicates it makes fewer extreme prediction errors compared to SVM, despite having a higher MAE. This suggests that while SVM makes more accurate predictions on average, it occasionally produces larger outlier errors.
+
+The $R^2$ scores, calculated as:
+
+$$
+R^2 = 1 - \frac{\sum(y_i - \hat{y_i})^2}{\sum(y_i - \bar{y})^2}
+$$
+
+range from $0.77$ to $0.80$, indicating that approximately $20\%$ of the variance in blur parameters remains unexplained by these models. KNN achieved the highest $R^2$ at $0.797$, suggesting it captures slightly more of the underlying relationship between image features and blur parameters.
+
+
+\newpage
+\section{Conclusion}
+
+Our experiments in predicting blur parameters yielded disappointing results across all tested models. The Random Forest, KNN, and SVM models achieved poor performance metrics, with the high Mean Absolute Error (MAE) values around 0.01 suggest significant deviations from true blur parameters. For motion blur angle prediction, errors frequently exceeded 15 degrees, making the resulting deblurred images visually unsatisfactory. These results indicate that our feature extraction approach, combining Sobel edges and FFT characteristics, failed to capture the complex relationships between image characteristics and blur parameters. The poor performance may be attributed to:
+
+\begin{enumerate}
+  \item Insufficient feature engineering to represent blur patterns
+  \item Inherent limitations of shallow models in capturing complex image degradation
+  \item Potential overfitting to specific blur patterns in our training data
+  \end{enumerate}
+
+Further research should explore deep learning approaches or more sophisticated feature extraction methods to improve blur parameter prediction accuracy. The current results suggest this approach is not viable for practical image deblurring applications.
+
+\FloatBarrier 
+
+\newpage
+\bibliography{references}
 
 \end{document}
-
-
