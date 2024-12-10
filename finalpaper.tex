@@ -111,7 +111,7 @@ To enhance training efficiency, we randomly cropped the original images into 256
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure1.jpg}
+\includegraphics[width=1\textwidth]{figure1.png}
 \caption{Illustration of the training dataset. Some images focus only on objects in the foreground, which may result in nearly blurred patches during random cropping. To address this, we manually remove such cases. Additionally, images with large areas of uniform color are also filtered out beforehand.}
 \end{figure}
 
@@ -147,7 +147,7 @@ Together, these kernels work to capture the directional gradients G within an im
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\textwidth]{figure2.jpg}
+\includegraphics[width=0.7\textwidth]{figure2.png}
 \caption{Illustration of Sobel Operator in Edge Detection.}
 \end{figure}
 
@@ -158,7 +158,7 @@ The Fast Fourier Transform (FFT) of an image converts the spatial domain represe
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\textwidth]{figure3.jpg}
+\includegraphics[width=0.85\textwidth]{figure3.png}
 \caption{FFT illustration: proximity to the center represents low-frequency features, while the outer regions highlight high-frequency details.}
 \end{figure}
 
@@ -166,7 +166,7 @@ Compared to spatial-domain features, which are more intuitive for human visual p
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\textwidth]{figure4.jpg}
+\includegraphics[width=0.85\textwidth]{figure4.png}
 \caption{Linear Motion FFT Plot. This plot demonstrates the relationship between the blur kernel and the FFT of the blurred image.}
 \end{figure}
 
@@ -198,7 +198,7 @@ H(x, y) =
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\textwidth]{figure5.jpg}
+\includegraphics[width=0.85\textwidth]{figure5.png}
 \caption{Illustration of blur kernel.}
 \end{figure}
 
@@ -209,7 +209,7 @@ Our second strategy, the direct kernel prediction approach, is a more ambitious 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{figure6.jpg}
+\includegraphics[width=1\textwidth]{figure6.png}
 \caption{Training and Application Flowchart.}
 \end{figure}
 
@@ -228,16 +228,22 @@ The presence of the noise term in the denominator highlights a key practical con
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.4\textwidth]{figure7.jpg}
-\caption{Deblurring the image using the Wiener filter with different blur kernels. 
-Finding the appropriate blur kernel  h(x, y)  is crucial for effectively restoring a blurred image. Once we identify the correct kernel, we can better recover the original image and reduce the effects of blurring.}
+\includegraphics[width=0.8\textwidth]{figure7.png}
+\caption{Deblurring the image using the Wiener filter with different blur kernels.}
 \end{figure}
+Finding the appropriate blur kernel  h(x, y)  is crucial for effectively restoring a blurred image. Once we identify the correct kernel, we can better recover the original image and reduce the effects of blurring
 
 \FloatBarrier 
 
 \section{Results}
 \subsection{Predicting kernel with their parameters}
 Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figure8.png}
+\caption{Ground truth and manually blurred images.}
+\end{figure}
 
 \subsection{Predicting the whole kernel}
 Predicting the entire blur kernel is a significantly more challenging task compared to parameter-based kernel estimation. Instead of inferring a few key parameters, such as the standard deviation (\( \sigma \)) for Gaussian blur or the angle for motion blur, this approach involves directly reconstructing the entire kernel matrix, typically represented as a 21×21 grid
@@ -246,13 +252,13 @@ In our study, we generated artificially blurred images using known Gaussian and 
 The next figures illustrate this process. The left side shows the predicted kernels corresponding to the artificially blurred images, while the right side presents the restored images obtained using the Wiener filter with these kernels. These experiments were conducted with an SNR of 0.1 to evaluate the robustness of the method under challenging noise conditions.
 \begin{figure}[H]
 \centering
-\includegraphics[width=1\textwidth]{figure8.png}
+\includegraphics[width=1\textwidth]{figure10.png}
 \caption{Ground truth and manually blurred images.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{figure9.png}
+\includegraphics[width=1\textwidth]{figure9.png}
 \caption{Comparison between predicted kernels (left) and restored images (right) using the Wiener filter.}
 \label{fig:predicted_vs_restored}
 \end{figure}
@@ -261,7 +267,7 @@ The visual comparison between predicted kernels and restored images demonstrates
 
 To complement this qualitative analysis, we evaluated the overall performance of our regression models using quantitative metrics. These metrics, detailed in Table \ref{tab:performance}, provide a broader perspective on the models' abilities to predict kernels accurately and effectively restore images across diverse testing scenarios.
 
-\begin{table}[h]
+\begin{table}[H]
 \caption{Performance Metrics for Different Models}
 \label{tab:performance}
 \begin{center}
