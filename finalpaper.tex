@@ -236,7 +236,30 @@ Finding the appropriate blur kernel  h(x, y)  is crucial for effectively restori
 \FloatBarrier 
 
 \section{Results}
-Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex. (Table \ref{tab:performance}).
+\subsection{Predicting kernel with their parameters}
+Predicting the sigma value (for Gaussian blur) or the angle (for motion blur) requires understanding details in the image. These features might not be easy to capture with shallow models like Random Forests, especially when the relationship between the image content and the blur parameters is highly nonlinear or complex. 
+
+\subsection{Predicting the whole kernel}
+Predicting the entire blur kernel is a significantly more challenging task compared to parameter-based kernel estimation. Instead of inferring a few key parameters, such as the standard deviation (\( \sigma \)) for Gaussian blur or the angle for motion blur, this approach involves directly reconstructing the entire kernel matrix, typically represented as a 21×21 grid
+
+In our study, we generated artificially blurred images using known Gaussian and motion blur kernels. The goal was to train regression models to predict these kernels based on features extracted from the blurred images. Once the kernels were predicted, Wiener deconvolution was applied to restore the images.
+The next figures illustrate this process. The left side shows the predicted kernels corresponding to the artificially blurred images, while the right side presents the restored images obtained using the Wiener filter with these kernels. These experiments were conducted with an SNR of 0.1 to evaluate the robustness of the method under challenging noise conditions.
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{figure8.png}
+\caption{Ground truth and manually blurred images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figure9.png}
+\caption{Comparison between predicted kernels (left) and restored images (right) using the Wiener filter.}
+\label{fig:predicted_vs_restored}
+\end{figure}
+
+The visual comparison between predicted kernels and restored images demonstrates the practical outcomes of the kernel prediction process. While the results vary depending on the complexity of the blur and noise conditions, these visualizations provide a qualitative perspective on the effectiveness of the predicted kernels.
+
+To complement this qualitative analysis, we evaluated the overall performance of our regression models using quantitative metrics. These metrics, detailed in Table \ref{tab:performance}, provide a broader perspective on the models' abilities to predict kernels accurately and effectively restore images across diverse testing scenarios.
 
 \begin{table}[h]
 \caption{Performance Metrics for Different Models}
@@ -254,7 +277,8 @@ SVM & 0.00933183 & 0.00214543 & 0.7891896 \\
 \end{center}
 \end{table}
 
-The performance metrics reveal several key insights about the models' capabilities in predicting blur parameters:
+
+The performance metrics reveal several key insights about the models' capabilities in predicting blur kernels:
 
 The Support Vector Machine (SVM) achieved the lowest Mean Absolute Error (MAE) at $0.00933$, approximately $26\%$ better than both Random Forest and KNN models which had MAE values around $0.0126$. This suggests that SVM's ability to handle nonlinear relationships through kernel transformations provided some advantage in capturing blur patterns.
 
